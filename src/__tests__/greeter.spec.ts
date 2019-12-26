@@ -1,5 +1,5 @@
 import Foow from '../index'
-
+import { ClearType } from '../index'
 interface Person {
   name: string
   age: number
@@ -191,5 +191,63 @@ describe(`FOOOOOOOOW`, () => {
     expect(r.result.name).toBe('kiki')
     expect(r.result.age).toBe(28)
     expect(r.result.dataName).toBe('moke')
+  })
+
+  it(`cache test`, async () => {
+    const flow = new Foow()
+    var testValue = 100
+    var times = 0
+    interface Test {
+      value: number
+    }
+    flow.setMethod({
+      name: 'cacheFn',
+      handler: flow.wrap<Test>(async () => {
+        times += 1
+        return { value: testValue * times }
+      }),
+    })
+    flow.setMethod({
+      name: 'cacheFn2',
+      handler: flow.wrap(async (data) => {
+        return { value: data.result.value + testValue }
+      }),
+    })
+    flow.setGroup({
+      name: 'cacheTest',
+      flows: ['cacheFn'],
+      useCache: true,
+    })
+    flow.setGroup({
+      name: 'cacheTest2',
+      flows: ['cacheTest', 'cacheFn2'],
+    })
+    let { result: r } = await flow.run<Test>({
+      name: 'cacheTest2',
+      data: {},
+    })
+    expect(times).toBe(1)
+    expect(r.value).toBe(testValue * times + testValue)
+    let { result: rr } = await flow.run<Test>({
+      name: 'cacheTest2',
+      data: {},
+    })
+    expect(times).toBe(1)
+    expect(rr.value).toBe(testValue * times + testValue)
+    // clear cache data
+    flow.clearAll(ClearType.Cache)
+    let { result: rrr } = await flow.run<Test>({
+      name: 'cacheTest2',
+      data: {},
+    })
+    expect(times).toBe(2)
+    expect(rrr.value).toBe(testValue * times + testValue)
+
+    let { result: rrrr } = await flow.run<Test>({
+      name: 'cacheTest2',
+      data: {},
+    })
+    expect(times).toBe(2)
+    expect(rrrr.value).toBe(testValue * times + testValue)
   })
 })

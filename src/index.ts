@@ -15,7 +15,7 @@ interface FlowRunParams {
   context?: object
 }
 
-enum ClearType {
+export enum ClearType {
   Cache = 'cacheData',
   Methods = 'methods',
 }
@@ -210,8 +210,8 @@ export default class Foow {
     }
     this.debug &&
       console.log(
-        `%c${name}_${__key__}`,
-        'background: #222; color: #bada55;padding: 4px'
+        `%c${name}_${__key__}: ${Date.now() - __now__}`,
+        'background: #535353; color: #bada55;padding:2px 4px'
       )
     return resultData as FlowData<R>
   }
