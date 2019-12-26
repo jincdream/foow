@@ -166,8 +166,10 @@ export default class Foow {
    * run
    */
   public async run<R>(params: FlowRunParams): Promise<FlowData<R>> {
-    this.debug && console.time()
     let { name, data } = params
+    let __now__ = Date.now()
+    let __key__ = __now__.toString(32)
+
     let cacheData = this.cacheData[name]
     // 缓存数据
     if (cacheData) return cacheData
@@ -206,7 +208,11 @@ export default class Foow {
     if (useCache) {
       this.setCacheData({ name, data: resultData })
     }
-    this.debug && console.timeEnd()
+    this.debug &&
+      console.log(
+        `%c${name}_${__key__}`,
+        'background: #222; color: #bada55;padding: 4px'
+      )
     return resultData as FlowData<R>
   }
 }
