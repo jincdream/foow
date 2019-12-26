@@ -32,7 +32,14 @@ interface IWrapHandler<R, C = any> {
   (data: FlowData, context: C): Promise<R>
 }
 export default class Foow {
-  constructor() {}
+  constructor(
+    options: {
+      debug?: boolean
+    } = {}
+  ) {
+    this.debug = options ? !!options.debug : false
+  }
+  private debug: boolean = false
   private errors: {
     [key: string]: Function
   } = {}
@@ -159,6 +166,7 @@ export default class Foow {
    * run
    */
   public async run<R>(params: FlowRunParams): Promise<FlowData<R>> {
+    this.debug && console.time()
     let { name, data } = params
     let cacheData = this.cacheData[name]
     // 缓存数据
@@ -198,6 +206,7 @@ export default class Foow {
     if (useCache) {
       this.setCacheData({ name, data: resultData })
     }
+    this.debug && console.timeEnd()
     return resultData as FlowData<R>
   }
 }
