@@ -171,8 +171,13 @@ export default class Foow {
     let __key__ = __now__.toString(32)
 
     let cacheData = this.cacheData[name]
+
     // 缓存数据
-    if (cacheData) return cacheData
+    if (cacheData) {
+      return {
+        result: Object.assign({}, cacheData.result, data),
+      }
+    }
     // 非缓存
     let isMethods = this.methods[name]
     // let isGroup = !isMethods && this.groups[name]

@@ -74,7 +74,7 @@ describe(`FOOOOOOOOW`, () => {
     flow.setMethod({
       name: 'first',
       handler: flow.wrap<Person>(async (data, context) => {
-        count = count + data.result.age
+        count = count + data.result.age1
         return {
           name: data.result.name,
           age: count,
@@ -92,7 +92,7 @@ describe(`FOOOOOOOOW`, () => {
       name: 'cacheTest',
       data: {
         name: 'loving',
-        age: 10,
+        age1: 10,
       },
     })
 
@@ -100,7 +100,7 @@ describe(`FOOOOOOOOW`, () => {
       name: 'cacheTest',
       data: {
         name: 'loving',
-        age: 10,
+        age1: 10,
       },
     })
 
@@ -108,12 +108,12 @@ describe(`FOOOOOOOOW`, () => {
       name: 'cacheTest',
       data: {
         name: 'loving',
-        age: 10,
+        age1: 10,
       },
     })
-    expect(r.result.age).toBe(40)
-    expect(rr.result.age).toBe(40)
-    expect(rrr.result.age).toBe(40)
+    expect(r.result.age).toBe(30)
+    expect(rr.result.age).toBe(30)
+    expect(rrr.result.age).toBe(30)
   })
 
   it(`no cache`, async () => {
@@ -249,5 +249,38 @@ describe(`FOOOOOOOOW`, () => {
     })
     expect(times).toBe(2)
     expect(rrrr.value).toBe(testValue * times + testValue)
+  })
+
+  it(`catch data`, async () => {
+    const flow = new Foow()
+    interface Test {
+      value: number
+    }
+    flow.setMethod({
+      name: 'cacheFn',
+      handler: flow.wrap<Test>(async (data, context) => {
+        return { value: data.result.value }
+      }),
+    })
+    flow.setGroup({
+      name: 'cache-Data-Test',
+      flows: ['cacheFn'],
+      useCache: true,
+    })
+
+    let { result: r } = await flow.run({
+      name: 'cache-Data-Test',
+      data: {
+        value: 100,
+      },
+    })
+    expect(r.value).toBe(100)
+    let { result: rr } = await flow.run({
+      name: 'cache-Data-Test',
+      data: {
+        value: 200,
+      },
+    })
+    expect(rr.value).toBe(200)
   })
 })
