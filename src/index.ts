@@ -137,20 +137,11 @@ export default class Foow {
     handler: IWrapHandler<R, C>
   ): FlowHandler<FlowData<R>> {
     let _wrap = async function(data: FlowData, context?: any) {
-      let handlerResult = {},
-        error
-      try {
-        handlerResult = await handler(data, context)
-      } catch (error) {
-        handlerResult = {}
-        error = error
-      }
+      let handlerResult = {}
+      handlerResult = await handler(data, context)
       data.result = {
         ...data.result,
         ...handlerResult,
-      }
-      if (error) {
-        data.error = error
       }
       return data
     }
@@ -189,21 +180,46 @@ export default class Foow {
     }
 
     if (isMethods) {
-      let r = await isMethods(resultData, fContext)
-      return r as FlowData<R>
+      try {
+        let r = await isMethods(resultData, fContext)
+        return r as FlowData<R>
+      } catch (error) {
+        throw new Error(
+          JSON.stringify(
+            {
+              fnName: isMethods.name,
+              name,
+              data: resultData,
+              context: fContext,
+              origin: { error },
+            },
+            null,
+            '\t'
+          )
+        )
+      }
     }
     for (let index = 0; index < flows.length; index++) {
       let fName = flows[index]
-
-      let r = await this.run({
+      let r
+      let fnParams = {
         name: fName,
         data: resultData.result,
         context: fContext,
-      })
-
-      if (r.error) {
-        this.runError(r.error)
-        delete r.error
+      }
+      try {
+        r = await this.run(fnParams)
+      } catch (error) {
+        throw new Error(
+          JSON.stringify(
+            {
+              ...fnParams,
+              origin: { error },
+            },
+            null,
+            '\t'
+          )
+        )
       }
       if (r.break) {
         break
