@@ -84,13 +84,17 @@ describe(`FOOOOOOOOW`, () => {
   it(`cache`, async () => {
     const flow = new Foow()
     let count = 0
+    interface PersonA extends Person {
+      age1: number
+    }
     flow.setMethod({
       name: 'first',
-      handler: flow.wrap<Person>(async (data, context) => {
-        count = count + data.result.age
+      handler: flow.wrap<PersonA>(async (data, context) => {
+        count = count + data.result.age1
         return {
           name: data.result.name,
           age: count,
+          age1: data.result.age1,
         }
       }),
     })
@@ -101,7 +105,7 @@ describe(`FOOOOOOOOW`, () => {
       useCache: true,
     })
 
-    let r = await flow.run<Person>({
+    let r = await flow.run<PersonA>({
       name: 'cacheTest',
       data: {
         name: 'loving',
@@ -109,7 +113,7 @@ describe(`FOOOOOOOOW`, () => {
       },
     })
 
-    let rr = await flow.run<Person>({
+    let rr = await flow.run<PersonA>({
       name: 'cacheTest',
       data: {
         name: 'loving',
@@ -117,7 +121,7 @@ describe(`FOOOOOOOOW`, () => {
       },
     })
 
-    let rrr = await flow.run<Person>({
+    let rrr = await flow.run<PersonA>({
       name: 'cacheTest',
       data: {
         name: 'loving',
@@ -295,5 +299,77 @@ describe(`FOOOOOOOOW`, () => {
       },
     })
     expect(rr.value).toBe(200)
+  })
+
+  it(`demo case`, async () => {
+    const flow = new Foow()
+    interface User {
+      nick: string
+      id: number
+    }
+    flow.setMethod({
+      name: 'getLoginUserFn',
+      handler: flow.wrap(async () => {
+        return {
+          nick: 'nick',
+          id: 7788,
+        } as User
+      }),
+    })
+    flow.setMethod({
+      name: 'getMemoFn',
+      handler: flow.wrap<User>(async (data) => {
+        return {
+          nick: data.result.nick,
+          id: data.result.id,
+          memo: 'something',
+        }
+      }),
+    })
+    flow.setMethod({
+      name: 'getTradeFn',
+      handler: flow.wrap<User>(async (data) => {
+        return {
+          nick: data.result.nick,
+          id: data.result.id,
+          trade: {
+            id: 77889,
+          },
+        }
+      }),
+    })
+    flow.setGroup({
+      name: 'getLoginUser',
+      flows: ['getLoginUserFn'],
+      useCache: true,
+    })
+    flow.setGroup({
+      name: 'getMemo',
+      flows: ['getLoginUser', 'getMemoFn'],
+    })
+    flow.setGroup({
+      name: 'getTrade',
+      flows: ['getLoginUser', 'getTradeFn'],
+    })
+    let { result: memoData } = await flow.run({
+      name: 'getMemo',
+      data: {},
+    })
+    let { result: tradeData } = await flow.run({
+      name: 'getTrade',
+      data: {},
+    })
+    expect(memoData).toEqual({
+      nick: 'nick',
+      id: 7788,
+      memo: 'something',
+    })
+    expect(tradeData).toEqual({
+      nick: 'nick',
+      id: 7788,
+      trade: {
+        id: 77889,
+      },
+    })
   })
 })
