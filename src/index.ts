@@ -29,7 +29,7 @@ interface ISetError<D, R> {
 }
 
 interface IWrapHandler<R, C = any> {
-  (data: FlowData, context: C): Promise<R>
+  (data: FlowData<R>, context: C): Promise<R>
 }
 export default class Foow {
   constructor(
@@ -136,7 +136,7 @@ export default class Foow {
   public wrap<R, C = any>(
     handler: IWrapHandler<R, C>
   ): FlowHandler<FlowData<R>> {
-    let _wrap = async function(data: FlowData, context?: any) {
+    let _wrap = async function(data: FlowData<R>, context?: any) {
       let handlerResult = {}
       handlerResult = await handler(data, context)
       data.result = {
@@ -184,6 +184,7 @@ export default class Foow {
         let r = await isMethods(resultData, fContext)
         return r as FlowData<R>
       } catch (error) {
+        console.error(error)
         throw new Error(
           JSON.stringify(
             {
@@ -191,7 +192,6 @@ export default class Foow {
               name,
               data: resultData,
               context: fContext,
-              origin: { error },
             },
             null,
             '\t'
@@ -210,11 +210,11 @@ export default class Foow {
       try {
         r = await this.run(fnParams)
       } catch (error) {
+        console.error(error)
         throw new Error(
           JSON.stringify(
             {
               ...fnParams,
-              origin: { error },
             },
             null,
             '\t'
@@ -231,8 +231,8 @@ export default class Foow {
     }
     this.debug &&
       console.log(
-        `%c${name}_${__key__}: ${Date.now() - __now__}`,
-        'background: #535353; color: #bada55;padding:2px 4px'
+        `%c${name}_${__key__}: ${Date.now() - __now__} ms`,
+        'background: #272727; color: #50d890;border:1px solid #4f98ca;padding:2px 4px'
       )
     return resultData as FlowData<R>
   }
